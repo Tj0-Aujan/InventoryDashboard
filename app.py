@@ -1,16 +1,8 @@
-
-# ---------------------------------------------------------
-# app.py — Full Dash App with Basic Auth (for Render)
-# ---------------------------------------------------------
-
 import os, base64
 from functools import wraps
 from flask import request, Response
 from dash import Dash
 
-# =========================================================
-# BASIC AUTHENTICATION
-# =========================================================
 USERNAME = "admin"
 PASSWORD = "Aujan123"
 
@@ -39,9 +31,6 @@ def apply_basic_auth(flask_server):
             )
     return flask_server
 
-# =========================================================
-# DASH APP INITIALIZATION
-# =========================================================
 import dash
 import dash_bootstrap_components as dbc
 from dash import dcc, html, Input, Output, State, dash_table
@@ -66,16 +55,11 @@ app = Dash(
 server = app.server
 apply_basic_auth(server)
 
-# =========================================================
-# USER’S DASHBOARD CODE (AS PROVIDED)
-# =========================================================
 
 # NOTE: The full dashboard code is extremely long.
 # The complete version has been inserted below exactly as provided.
 
-# -----------------------------
-# CONFIG
-# -----------------------------
+
 FILE_PATH = r"C:/Data/Branch_Inventory_Supply_Summary.xlsx"
 SERVER_PORT = 8051
 
@@ -83,9 +67,6 @@ SUMMARY_SHEET = "Summary"
 CRIT_SHEET = "Stock Criticality_Days"
 COORD_SHEET = "Coordinates"
 
-# =========================================================
-# UTIL FUNCTIONS
-# =========================================================
 def parse_depletion_date(x):
     if pd.isna(x):
         return pd.NaT
@@ -143,10 +124,6 @@ def explode_interrotation(df):
 def normalize_branch(x):
     return str(x).strip().replace("–", "-").upper()
 
-
-# =========================================================
-# LOAD DATA
-# =========================================================
 def load_summary(path=FILE_PATH, sheet=SUMMARY_SHEET):
     df = pd.read_excel(path, sheet_name=sheet, dtype=str)
     df = df.fillna("")
@@ -238,9 +215,6 @@ df_crit.rename(columns=lambda x: normalize_branch(x), inplace=True)
 df_crit["AI_SKU"] = df_crit["AI_SKU"].astype(str)
 df_crit["AI_MFGBRND"] = df_crit["AI_MFGBRND"].astype(str).str.upper()
 
-# =========================================================
-# FILTER OPTIONS
-# =========================================================
 BRANDS = sorted(df_full["Brand"].unique())
 PLANTS = sorted(df_full["Plant"].unique())
 BRANCHES = sorted(df_full["Branch"].unique())
@@ -252,9 +226,6 @@ OVERSELL_FILTER = ["Yes", "No"]
 RISK_FILTER = ["Yes", "No"]  # Yes/No based on IsRisk
 
 
-# =========================================================
-# COMPONENT HELPERS
-# =========================================================
 def counting_dropdown(id_, count_id, options, label_text):
     return html.Div(
         [
@@ -322,10 +293,6 @@ def _count_label(values, base):
         return f"{base} ({len(values)} selected)"
     return f"{base} (0 selected)"
 
-
-# =========================================================
-# APP + INLINE CSS
-# =========================================================
 app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
@@ -459,10 +426,6 @@ app.index_string = """
 </html>
 """
 
-
-# =========================================================
-# LAYOUT
-# =========================================================
 app.layout = dbc.Container(
     [
         # Header row
@@ -865,10 +828,6 @@ app.layout = dbc.Container(
     fluid=True,
 )
 
-
-# =========================================================
-# HELPER: APPLY FILTERS
-# =========================================================
 def apply_filters(
     base_df,
     brands,
@@ -934,10 +893,6 @@ def apply_filters(
 
     return df
 
-
-# =========================================================
-# CALLBACK: SHOW/HIDE FILTERS
-# =========================================================
 @app.callback(
     Output("filter-collapse", "is_open"),
     Input("filter-toggle", "n_clicks"),
@@ -948,10 +903,6 @@ def toggle_filters(n, is_open):
         return not is_open
     return is_open
 
-
-# =========================================================
-# CALLBACK: CASCADING FILTER OPTIONS
-# =========================================================
 @app.callback(
     Output("brand-filter", "options"),
     Output("plant-filter", "options"),
@@ -1093,9 +1044,6 @@ def update_filter_options(
     return brand_opts, plant_opts, branch_opts, class_opts, bu_opts, sku_opts
 
 
-# =========================================================
-# CALLBACK: DROPDOWN CLASS (chip display logic)
-# =========================================================
 @app.callback(
     Output("brand-filter", "className"),
     Output("plant-filter", "className"),
@@ -1145,9 +1093,6 @@ def update_dropdown_classes(
     )
 
 
-# =========================================================
-# MAIN DASHBOARD CALLBACK
-# =========================================================
 @app.callback(
     Output("kpi-row", "children"),
     Output("plant-inv-chart", "figure"),
@@ -1210,9 +1155,6 @@ def update_dashboard(
         dff_filtered.get("Total_SKU_Plant_Inventory", 0), errors="coerce"
     ).fillna(0)
 
-    # -----------------------------------------------------
-    # OOS calculation per SKU+Plant (for treemap + KPI)
-    # -----------------------------------------------------
     if not dff_filtered.empty:
         oos_group = (
             dff_filtered.groupby(["SKU", "Plant"], as_index=False)
@@ -1242,9 +1184,6 @@ def update_dashboard(
         oos_treemap = pd.DataFrame(columns=["SKU", "Plant", "Brand", "BalanceSupply", "TotalPlantInv", "OOS_Cases"])
         total_oos_cases = 0
 
-    # -----------------------------------------------------
-    # KPIs
-    # -----------------------------------------------------
     total_sku_10d = dff_filtered["SKU"].nunique()
     bal_supply_sum = int(dff_filtered["BalanceSupply"].sum())
     risk_count = int(dff_filtered["IsRisk"].sum())
@@ -1293,9 +1232,6 @@ def update_dashboard(
             ),
         ]
 
-    # -----------------------------------------------------
-    # Info table columns (UpcomingPlan in both views)
-    # -----------------------------------------------------
     if view_mode == "executive":
         info_columns = [
             {"name": "Plant", "id": "Plant", "type": "text"},
@@ -1366,9 +1302,6 @@ def update_dashboard(
     dff_filtered["UpcomingPlan"] = dff_filtered["UpcomingPlan_parsed"].dt.date
     info_data = dff_filtered[[c["id"] for c in info_columns]].to_dict("records")
 
-    # -----------------------------------------------------
-    # Theming helper (single "light" theme)
-    # -----------------------------------------------------
     def apply_theme(fig):
         fig.update_layout(
             template="plotly",
@@ -1379,10 +1312,6 @@ def update_dashboard(
         )
         return fig
 
-    # -----------------------------------------------------
-    # Plant Inventory Treemap
-    # Brand → Plant → SKU, size = BalanceSupply, color = OOS_Cases
-    # -----------------------------------------------------
     if not oos_treemap.empty:
         dff_agg = oos_treemap.copy()
         dff_agg["BalanceSupply"] = dff_agg["BalanceSupply"].clip(lower=0)
@@ -1428,9 +1357,6 @@ def update_dashboard(
         )
     fig_inv = apply_theme(fig_inv)
 
-    # -----------------------------------------------------
-    # OOS & Risk bar (cases)
-    # -----------------------------------------------------
     if not dff_filtered.empty:
         if view_mode == "executive":
             group_col = "BusinessUnit"
@@ -1526,9 +1452,6 @@ def update_dashboard(
     )
     fig_bar = apply_theme(fig_bar)
 
-    # -----------------------------------------------------
-    # Branch OOS Treemap (by BalanceSupply)
-    # -----------------------------------------------------
     treemap_df = (
         dff_filtered.groupby(["Branch", "Brand", "SKU"])["BalanceSupply"]
         .sum()
@@ -1556,11 +1479,6 @@ def update_dashboard(
         fig_treemap.update_layout(margin=dict(t=40, l=10, r=10, b=10))
     fig_treemap = apply_theme(fig_treemap)
 
-    # -----------------------------------------------------
-    # Stock Criticality Table
-    # heatmap style: red worst → yellow → white (OK)
-    # only branches present in filtered data
-    # -----------------------------------------------------
     crit_columns = []
     crit_data = []
     style_data_conditional = []
@@ -1643,11 +1561,6 @@ def update_dashboard(
         crit_data = []
         style_data_conditional = []
 
-    # -----------------------------------------------------
-    # Inter-rotation Map
-    # If exactly one SKU in filtered data → show network from donors → OOS branches
-    # Else → bubble map by cases only
-    # -----------------------------------------------------
     if not dff_filtered.empty:
         unique_skus = dff_filtered["SKU"].nunique()
     else:
@@ -1811,10 +1724,6 @@ def update_dashboard(
         last_refresh,
     )
 
-
-# =========================================================
-# CRITICALITY EXPORT CALLBACK
-# =========================================================
 @app.callback(
     Output("crit-download", "data"),
     Input("crit-export-btn", "n_clicks"),
@@ -1834,9 +1743,6 @@ def export_criticality(n_clicks, rows):
     return send_bytes(to_xlsx, "Stock_Criticality.xlsx")
 
 
-# =========================================================
-# INFORMATION EXPORT CALLBACK
-# =========================================================
 @app.callback(
     Output("info-download", "data"),
     Input("info-export-btn", "n_clicks"),
@@ -1856,9 +1762,6 @@ def export_information(n_clicks, rows):
     return send_bytes(to_xlsx, "Information.xlsx")
 
 
-# =========================================================
-# LABEL COUNTS
-# =========================================================
 @app.callback(Output("brand-count-label", "children"), Input("brand-filter", "value"))
 def _brand_count(v):
     return _count_label(v, "Brand")
@@ -1905,7 +1808,6 @@ def _oversell_count(v):
 def _risk_count(v):
     return _count_label(v, "Risk")
 
-----------------
 
 if __name__ == "__main__":
     app.run(port=SERVER_PORT, debug=True, host="0.0.0.0")
