@@ -60,7 +60,7 @@ apply_basic_auth(server)
 # The complete version has been inserted below exactly as provided.
 
 
-FILE_PATH = r"C:/Data/Branch_Inventory_Supply_Summary.xlsx"
+FILE_PATH = "Branch_Inventory_Supply_Summary.xlsx"
 SERVER_PORT = 8051
 
 SUMMARY_SHEET = "Summary"
