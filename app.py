@@ -44,16 +44,6 @@ from dash.dcc import send_bytes
 from dash.dash_table import FormatTemplate
 from dash.dash_table.Format import Format, Group, Scheme
 
-# Create Dash app
-app = Dash(
-    __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP],
-    suppress_callback_exceptions=True,
-)
-
-# Expose Flask server (Render uses this)
-server = app.server
-apply_basic_auth(server)
 
 
 # NOTE: The full dashboard code is extremely long.
